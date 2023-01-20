@@ -145,8 +145,11 @@ dmypy.json
 
 .mypy_cache
 
+.venv
 # папки со статикой и медиа
 static/
-yatube/posts/static/
+# медиа
 yatube/media/
+# css
+yatube/static/css
 
