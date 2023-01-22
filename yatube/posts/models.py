@@ -108,3 +108,36 @@ class Comment(models.Model):
 
     def __str__(self) -> str:
         return self.text[:Comment.COMMENT_TEXT_LEN]
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='follower',
+        verbose_name='Подписчик'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following',
+        verbose_name='Автор'
+    )
+
+    class Meta:
+        ordering = ('user',)
+        verbose_name = 'follow'
+        verbose_name_plural = 'follows'
+
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'author'),
+                name='unique subscription'
+            ),
+        )
+
+    def __str__(self):
+        return (
+            f'Follower: {self.user.username} ({self.user.id}); '
+            f'Following to: {self.author.username} ({self.author.id})'
+        )

@@ -66,16 +66,16 @@
 
       {% for comment in comments %}
         <div class="media mb-4 p-4 pb-0">
-          {% comment %} <div class="media-body">
-            <h5 class="mt-0"> {% endcomment %}
+          <div class="media-body">
+            <h5 class="mt-0">
               <a class="text-decoration-none" href="{% url 'posts:profile' comment.author.username %}">
                 {{ comment.author.username }}
               </a>
             </h5>
               <p>
-              {{ comment.text }}
+                {{ comment.text }}
               </p>
-          {% comment %} </div> {% endcomment %}
+          </div>
         </div>
       {% endfor %} 
     </article>

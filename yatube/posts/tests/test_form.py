@@ -5,7 +5,7 @@ from django.conf import settings
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from ..models import Group, Post, User
+from ..models import Comment, Group, Post, User
 
 # Создаем временную папку для медиа-файлов;
 # на момент теста медиа папка будет переопределена
@@ -59,6 +59,8 @@ class PostCreateFormTests(TestCase):
             'posts:post_edit',
             args=[cls.post.id]
         )
+        cls.COMMENT_ADD_URL = reverse('posts:add_comment',
+                                      args=[cls.post.id])
 
     # Удаляем временную папку
     @classmethod
@@ -134,3 +136,41 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(post.text, self.post.text)
         self.assertEqual(post.group, self.post.group)
         self.assertEqual(post.author, self.post.author)
+
+    def test_comment_create(self):
+        """"Проверка создания комментария"""
+        start_comment_count = Comment.objects.all().count()
+        form_data = {'post_id': self.post.id,
+                     'text': 'Новый комментарий'}
+        comment_before = set(Comment.objects.all())
+        response = self.authorized_client.post(
+            self.COMMENT_ADD_URL,
+            data=form_data,
+            follow=True
+        )
+        comment_after = set(Comment.objects.all())
+        self.assertEqual(len(comment_after.difference(comment_before)), 1)
+        comment = list(comment_after.difference(comment_before))[0]
+        final_posts_count = Comment.objects.all().count() - 1
+        data_for_test = {
+            comment.post.pk: self.post.id,
+            comment.text: form_data['text'],
+            final_posts_count: start_comment_count
+        }
+        for final_data, initial_data in data_for_test.items():
+            with self.subTest(final_data=final_data):
+                self.assertEqual(final_data, initial_data)
+        self.assertRedirects(response, self.POST_PAGE_URL)
+
+    def test_comment_create_auth_only(self):
+        """"Проверка неавторизованный пользователь не может комментировать"""
+        start_comment_count = Comment.objects.all().count()
+        form_data = {'post_id': self.post.id,
+                     'text': 'Новый комментарий'}
+        response = self.guest_client.post(
+            self.COMMENT_ADD_URL,
+            data=form_data,
+            follow=True
+        )
+        self.assertEqual(start_comment_count, Comment.objects.all().count())
+        self.assertEqual(response.status_code, 200)

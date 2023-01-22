@@ -4,8 +4,9 @@ import tempfile
 from django.conf import settings
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.core.files.uploadedfile import SimpleUploadedFile
 
-from ..models import Group, Post, User
+from ..models import Group, Post, User, Follow
 
 POSTS_SECOND_PAGE = 3
 MAIN_URL = reverse('posts:index')
@@ -13,6 +14,8 @@ MAIN_PAGE_PAGINATOR_SECOND = MAIN_URL + '?page=2'
 SLUG_1 = 'testslug_1'
 NIK_1 = 'testauthor_1'
 SLUG_2 = 'test_slug_2'
+NIK_2 = 'testauthor_2'
+NIK_3 = 'testauthor_3'
 GROUP_URL = reverse(
     'posts:group_list',
     args=[SLUG_1]
@@ -30,6 +33,19 @@ ANOTHER_GROUP_URL = reverse(
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 POST_TEST = 'ш' * 50
+
+SMALL_GIF = SimpleUploadedFile(
+    name='small.gif',
+    content=(
+        b'\x47\x49\x46\x38\x39\x61\x02\x00'
+        b'\x01\x00\x80\x00\x00\x00\x00\x00'
+        b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+        b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+        b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+        b'\x0A\x00\x3B'
+    ),
+    content_type='image/gif'
+)
 
 
 class PostsPagesTests(TestCase):
@@ -53,7 +69,8 @@ class PostsPagesTests(TestCase):
         cls.post = Post.objects.create(
             text=POST_TEST,
             group=cls.group,
-            author=cls.user
+            author=cls.user,
+            image=SMALL_GIF
         )
         # библиотека урлов
         cls.POST_PAGE_URL = reverse(
@@ -92,6 +109,7 @@ class PostsPagesTests(TestCase):
             self.assertEqual(self.post.author, post.author)
             self.assertEqual(self.post.group, post.group)
             self.assertEqual(self.post, post)
+            self.assertEqual(self.post.image, post.image)
 
     def test_profile_has_correct_context(self):
         '''Автор в контексте Профиля'''
@@ -145,8 +163,91 @@ class PaginatorTest(TestCase):
             PROFILE_PAGINATOR_SECOND: POSTS_SECOND_PAGE,
         }
         for url, number in urls.items():
-            with self.subTest(url=url):
+            with self.subTest(url=url, number=number):
                 response = self.guest.get(url)
                 self.assertEqual(
                     len(response.context['page_obj']), number
                 )
+
+
+class FollowTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.user = User.objects.create_user(
+            username=NIK_1
+        )
+        cls.user2 = User.objects.create_user(
+            username=NIK_2
+        )
+        cls.author = User.objects.create_user(
+            username=NIK_3
+        )
+
+        cls.FOLLOW_URL = reverse(
+            'posts:profile_follow', kwargs={'username': cls.author.username}
+        )
+        cls.UNFOLLOW_URL = reverse(
+            'posts:profile_unfollow', kwargs={'username': cls.author.username}
+        )
+        cls.PROFILE_URL = reverse('posts:profile',
+                                  kwargs={'username':
+                                          cls.author.username})
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
+        cls.authorized_client2 = Client()
+        cls.authorized_client2.force_login(cls.user2)
+        cls.form_data = {'user': cls.user,
+                         'author': cls.author}
+        cls.test_post = Post.objects.create(author=cls.author,
+                                            text='Текстовый текст')
+
+    def test_auth_user_can_follow(self):
+        """Тест авторизованный пользователь может
+        подписываться."""
+        count_followers = Follow.objects.all().count()
+        response = self.authorized_client.post(
+            self.FOLLOW_URL,
+            data=self.form_data,
+            follow=True
+        )
+        final_follow = Follow.objects.all().count() - 1
+        self.assertEqual(count_followers, final_follow)
+        self.assertRedirects(response, self.PROFILE_URL)
+
+    def test_auth_user_can_unfollow(self):
+        """Тест авторизованный пользователь может
+        отписаться."""
+        Follow.objects.create(
+            user=self.user,
+            author=self.author
+        )
+        count_followers = Follow.objects.all().count()
+        unfollow = self.authorized_client.post(
+            self.UNFOLLOW_URL,
+            data=self.form_data,
+            follow=True
+        )
+        final_follow = Follow.objects.all().count() + 1
+        self.assertEqual(count_followers, final_follow)
+        self.assertRedirects(unfollow, self.PROFILE_URL)
+
+    def test_follower_see_new_post(self):
+        """У подписчика появляется новый пост автора.
+        А у не подписчика его нет"""
+        Follow.objects.create(user=self.user,
+                              author=self.author)
+        response_follow = self.authorized_client.get(
+            reverse('posts:follow_index'))
+        posts_follow = response_follow.context['page_obj']
+        self.assertIn(self.test_post, posts_follow)
+
+    def test_follower_not_see_new_post(self):
+        """У не подписчика не появляется новый пост автора."""
+        Follow.objects.create(user=self.user,
+                              author=self.author)
+        response_no_follower = self.authorized_client2.get(
+            reverse('posts:follow_index'))
+        posts_no_follow = response_no_follower.context['page_obj']
+        self.assertNotIn(self.test_post, posts_no_follow)
