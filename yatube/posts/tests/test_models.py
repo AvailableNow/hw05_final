@@ -56,7 +56,7 @@ class PostModelTest(TestCase):
         field_verboses_comment = {
             'text': 'Текст комментария',
             'author': 'Автор',
-            'post': 'Комментарий к посту',
+            'post': 'Комментаруемый пост',
             'pub_date': 'Дата публикации'
         }
         for value, expected in field_verboses_comment.items():
@@ -76,7 +76,7 @@ class PostModelTest(TestCase):
             'title': 'Наименование группы, не более 200 символов',
         }
         field_help_text_comment = {
-            'post': 'Комментаруемый пост',
+            'post': 'Пост к которому создается комментарий',
             'text': 'Введите текст комментария',
         }
 

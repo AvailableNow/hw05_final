@@ -1,17 +1,15 @@
 {% extends 'base.html' %}
 {% block title %} Записи сообщества: {{ group.title }} {% endblock %}
 {% block content %}
-  {% load user_filters %}
-  {% load thumbnail %}
-    <div class="container py-5">
-      <h1>{{ group.title }}</h1>
-      <p>
-        <h4>Записи сообщества: {{ group.description|linebreaks }}</h4><hr>
-      </p>
-      {% for post in page_obj %}
-        {%include 'includes/post.html'%}
-        {% if not forloop.last %}<hr>{% endif%}
-      {% endfor %}
-      {% include 'posts/includes/paginator.html' %}
-    </div>
-  {% endblock %}
+  <div class="container py-5">
+    <h1>{{ group.title }}</h1>
+    <p>
+      <h4>{{ group.description|linebreaks }}</h4>
+    </p>
+    {% for post in page_obj %}
+      {%include 'posts/includes/post.html' with no_group=True %}
+      {% if not forloop.last %}<hr>{% endif%}
+    {% endfor %}
+    {% include 'posts/includes/paginator.html' %}
+  </div>
+{% endblock %}

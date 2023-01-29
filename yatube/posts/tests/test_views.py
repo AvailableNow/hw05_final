@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from ..models import Group, Post, User, Follow
-
+POSTS_COUNT = 13
 POSTS_SECOND_PAGE = 4
 NIK_1 = 'test_user'
 NIK_2 = 'test_author'
@@ -54,10 +54,22 @@ GROUP_URL_2_SECOND = f'{GROUP_URL_2}?page=2'
 PROFILE_PAGINATOR_SECOND = f'{PROFILE_URL}?page=2'
 FOLLOW_URL_SECOND = f'{FOLLOW_URL}?page=2'
 
-FOLLOW_USER_URL = reverse('posts:profile_follow',
-                          args=[NIK_2])
-UNFOLLOW_USER_URL = reverse('posts:profile_unfollow',
-                            args=[NIK_2])
+FOLLOW = reverse(
+    'posts:profile_follow',
+    args=[NIK_1]
+)
+UNFOLLOW = reverse(
+    'posts:profile_unfollow',
+    args=[NIK_1]
+)
+FOLLOW_USER_URL = reverse(
+    'posts:profile_follow',
+    args=[NIK_2]
+)
+UNFOLLOW_USER_URL = reverse(
+    'posts:profile_unfollow',
+    args=[NIK_2]
+)
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -99,9 +111,6 @@ class PostsPagesTests(TestCase):
         cls.POST_PAGE_URL = reverse(
             'posts:post_detail', args=[cls.post.id]
         )
-        cls.FOLLOW = reverse('posts:profile_follow', args=[NIK_1])
-        cls.UNFOLLOW = reverse(
-            'posts:profile_unfollow', args=[NIK_1])
         # первый клиент автор поста
         cls.guest = Client()
         cls.authorized = Client()
@@ -193,9 +202,8 @@ class PostsPagesTests(TestCase):
         }
         for url, number in urls.items():
             with self.subTest(url=url, number=number):
-                response = self.authorized.get(url)
                 self.assertEqual(
-                    len(response.context['page_obj']), number
+                    len(self.authorized.get(url).context['page_obj']), number
                 )
 
     def test_index_cache(self):
@@ -211,11 +219,13 @@ class PostsPagesTests(TestCase):
     def test_following(self):
         """Проверка подписки на автора."""
         followes_count = Follow.objects.count()
-        self.follower_client.get(self.FOLLOW)
+        self.follower_client.get(FOLLOW)
         self.assertEqual(followes_count + 1, Follow.objects.count())
-        self.assertTrue(self.follower_user.follower.filter(
-            author=self.user_test
-        ))
+        self.assertTrue(
+            Follow.objects.filter(
+                user=self.follower_user,
+                author=self.user_test).exists()
+        )
 
     def test_unfollowing(self):
         """Проверка отписки на автора."""
@@ -224,8 +234,10 @@ class PostsPagesTests(TestCase):
             author=self.user_test
         )
         followes_count = Follow.objects.count()
-        self.follower_client.get(self.UNFOLLOW)
+        self.follower_client.get(UNFOLLOW)
         self.assertEqual(followes_count - 1, Follow.objects.count())
-        self.assertFalse(self.follower_user.follower.filter(
-            author=self.user_test
-        ))
+        self.assertFalse(
+            Follow.objects.filter(
+                user=self.follower_user,
+                author=self.user_test).exists()
+        )
