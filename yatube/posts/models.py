@@ -3,6 +3,8 @@ from django.db import models
 
 User = get_user_model()
 STRING_FROM_POST = 'author: {}, date: {:%m%d%Y}, group: {}, text: {:.15}'
+STRING_FROM_COMMENT = 'author {}, date: {:%m%d%Y}, post: {}, text: {:.15}'
+STRING_FROM_FOLLOW = 'Follower: {}, ({}) ==> {}, ({})'
 
 
 class Group(models.Model):
@@ -82,7 +84,8 @@ class Comment(models.Model):
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        verbose_name='Текст поста',
+        verbose_name='Комментарий к посту',
+        help_text='Комментаруемый пост'
     )
     author = models.ForeignKey(
         User,
@@ -102,12 +105,17 @@ class Comment(models.Model):
     )
 
     class Meta:
-        ordering = ['-pub_date']
+        ordering = ('-pub_date',)
         verbose_name = 'Комментарий'
         verbose_name_plural = 'Комментарии'
 
     def __str__(self) -> str:
-        return self.text[:Comment.COMMENT_TEXT_LEN]
+        return STRING_FROM_COMMENT.format(
+            self.author.username,
+            self.pub_date,
+            self.post,
+            self.text,
+        )
 
 
 class Follow(models.Model):
@@ -125,7 +133,7 @@ class Follow(models.Model):
     )
 
     class Meta:
-        ordering = ('user',)
+        ordering = ('author',)
         verbose_name = 'follow'
         verbose_name_plural = 'follows'
 
@@ -137,7 +145,9 @@ class Follow(models.Model):
         )
 
     def __str__(self):
-        return (
-            f'Follower: {self.user.username} ({self.user.id}); '
-            f'Following to: {self.author.username} ({self.author.id})'
+        return STRING_FROM_FOLLOW.format(
+            self.user.username,
+            self.user.id,
+            self.author.username,
+            self.author.id,
         )

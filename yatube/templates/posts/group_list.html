@@ -1,33 +1,17 @@
 {% extends 'base.html' %}
 {% block title %} Записи сообщества: {{ group.title }} {% endblock %}
 {% block content %}
-{% load user_filters %}
-{% load thumbnail %}
-  <div class="container py-5">
-    <h1>{{ group.title }}</h1>
-    <p>
-      <h4>Записи сообщества: {{ group.description|linebreaks }}</h4><hr>
-    </p>
-    {% for post in page_obj %}
-      <article>
-        <ul>
-          <li>
-            Автор:  <a href="{% url 'posts:profile' post.author.username %}"> {{ post.author.get_full_name }} </a>
-          </li>
-          <li>
-            Дата публикации: {{ post.pub_date|date:"d E Y" }}
-          </li>
-        </ul>
-        {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
-          <img class="card-img my-2" src="{{ im.url }}" alt="">
-        {% endthumbnail %}
-        <p>{{ post.text|linebreaksbr }}</p>
-        <li>
-          <a href="{% url 'posts:post_detail' post.id %}">Подробная информация</a>
-        </li>
-      </article>
-      {% if not forloop.last %}<hr>{% endif%}
-    {% endfor %}
-    {% include 'posts/paginator.html' %}
-  </div>
-{% endblock %}
+  {% load user_filters %}
+  {% load thumbnail %}
+    <div class="container py-5">
+      <h1>{{ group.title }}</h1>
+      <p>
+        <h4>Записи сообщества: {{ group.description|linebreaks }}</h4><hr>
+      </p>
+      {% for post in page_obj %}
+        {%include 'includes/post.html'%}
+        {% if not forloop.last %}<hr>{% endif%}
+      {% endfor %}
+      {% include 'posts/includes/paginator.html' %}
+    </div>
+  {% endblock %}

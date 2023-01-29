@@ -18,9 +18,19 @@ PROFILE_URL = reverse(
     'posts:profile',
     args=[NIK]
 )
+FOLLOW_URL = reverse('posts:follow_index')
+FOLLOWING_URL = reverse(
+    'posts:profile_follow',
+    args=[NIK]
+)
+UFOLLOWING_URL = reverse(
+    'posts:profile_unfollow',
+    args=[NIK]
+)
 LOGIN = reverse('login')
 CREATE_REDIRECT = f'{LOGIN}?next={NEW_POST_URL}'
 
+POST_UFOLLOWING_REDIRECT = f'{LOGIN}?next={PROFILE_URL}unfollow/'
 POST_TEXT = 'ш' * 50
 
 
@@ -43,7 +53,19 @@ class PostsURLTests(TestCase):
             group=cls.group,
             author=cls.user
         )
+        # первый клиент автор поста
+        cls.guest = Client()
+        cls.author = Client()
+        cls.author.force_login(cls.user)
+        # второй клиент не автор поста
+        cls.another = Client()
+        cls.another.force_login(cls.user_2)
+
         # библиотека урлов
+        cls.PROFILE_URL2 = reverse(
+            'posts:profile',
+            args=[cls.user.username]
+        )
         cls.POST_PAGE_URL = reverse(
             'posts:post_detail',
             args=[cls.post.id]
@@ -53,15 +75,11 @@ class PostsURLTests(TestCase):
             args=[cls.post.id]
         )
         cls.POST_EDIT_REDIRECT = f'{LOGIN}?next={cls.EDIT_POST_URL}'
-
-    def setUp(self):
-        # первый клиент автор поста
-        self.guest = Client()
-        self.author = Client()
-        self.author.force_login(self.user)
-        # второй клиент не автор поста
-        self.another = Client()
-        self.another.force_login(self.user_2)
+        cls.POST_UFOLLOWING_REDIRECT = f'{LOGIN}?next={PROFILE_URL}unfollow/'
+        cls.COMMENT_URL = reverse(
+            'posts:add_comment',
+            args=[cls.post.id]
+        )
 
     # 1. Проверка запросов к страницам
     def test_url_exists(self):
@@ -77,6 +95,10 @@ class PostsURLTests(TestCase):
             [self.EDIT_POST_URL, self.author, 200],
             [NOT_FOUND_URL, self.guest, 404],
             [self.EDIT_POST_URL, self.another, 302],
+            [self.COMMENT_URL, self.another, 302],
+            [FOLLOW_URL, self.another, 200],
+            [UFOLLOWING_URL, self.guest, 302],
+            [FOLLOWING_URL, self.author, 302]
         ]
         for url, client, code in cases:
             with self.subTest(url=url, client=client):
@@ -93,6 +115,7 @@ class PostsURLTests(TestCase):
             ['posts/create_post.html', NEW_POST_URL, self.author],
             ['posts/create_post.html', self.EDIT_POST_URL,
              self.author],
+            ['posts/follow.html', FOLLOW_URL, self.another],
         ]
         for template, url, client in url_names:
             with self.subTest(url=url):
@@ -106,6 +129,9 @@ class PostsURLTests(TestCase):
             [self.EDIT_POST_URL, self.guest,
                 self.POST_EDIT_REDIRECT],
             [self.EDIT_POST_URL, self.another, PROFILE_URL],
+            [self.COMMENT_URL, self.another, self.POST_PAGE_URL],
+            [UFOLLOWING_URL, self.guest, POST_UFOLLOWING_REDIRECT],
+            [FOLLOWING_URL, self.author, PROFILE_URL],
         ]
         for url, client, redirected in url_names:
             with self.subTest(url=url, client=client):

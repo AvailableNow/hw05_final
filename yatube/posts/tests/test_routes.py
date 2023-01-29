@@ -1,6 +1,9 @@
 from django.test import TestCase
 from django.urls import reverse
 
+
+from ..urls import app_name
+
 USERNAME = 'test_user'
 SLUG = 'test_group'
 POST_ID = 1
@@ -13,6 +16,10 @@ TEST_URLS = {
      f'/posts/{POST_ID}/', POST_ID),
     ('post_edit',
      f'/posts/{POST_ID}/edit/', POST_ID),
+    ('follow_index', '/follow/'),
+    ('profile_follow', f'/profile/{USERNAME}/follow/', USERNAME),
+    ('profile_unfollow', f'/profile/{USERNAME}/unfollow/', USERNAME),
+    ('add_comment', f'/posts/{POST_ID}/comment/', POST_ID)
 }
 
 
@@ -21,4 +28,4 @@ class RoutesTest(TestCase):
         for routes, address, *keys, in TEST_URLS:
             with self.subTest(routes=routes):
                 self.assertEqual(reverse(
-                    f'posts:{routes}', args=keys), address)
+                    f'{app_name}:{routes}', args=keys), address)
