@@ -8,7 +8,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from ..models import Comment, Group, Post, User
 
-
 # Создаем временную папку для медиа-файлов;
 # на момент теста медиа папка будет переопределена
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -129,8 +128,7 @@ class PostCreateFormTests(TestCase):
         self.assertRedirects(response, PROFILE_URL_2)
         self.assertEqual(
             post.image,
-            (f"{Post.image.field.upload_to}"
-             f"{form_data['image'].name}")
+            f'{Post.image.field.upload_to}{form_data["image"].name}'
         )
 
     def test_post_edit_by_author(self):
@@ -154,8 +152,7 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(post.author, self.post.author)
         self.assertEqual(
             post.image,
-            (f"{Post.image.field.upload_to}"
-             f"{form_data['image'].name}")
+            f'{Post.image.field.upload_to}{form_data["image"].name}'
         )
 
     def test_authorized_comment_create(self):
