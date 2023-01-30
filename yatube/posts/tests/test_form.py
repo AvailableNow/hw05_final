@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from ..models import Comment, Group, Post, User
-from posts.apps import PostsConfig
+
 
 # Создаем временную папку для медиа-файлов;
 # на момент теста медиа папка будет переопределена
@@ -129,7 +129,8 @@ class PostCreateFormTests(TestCase):
         self.assertRedirects(response, PROFILE_URL_2)
         self.assertEqual(
             post.image,
-            f'{PostsConfig.name}/{form_data["image"]}'
+            (f"{Post.image.field.upload_to}"
+             f"{form_data['image'].name}")
         )
 
     def test_post_edit_by_author(self):
@@ -153,7 +154,8 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(post.author, self.post.author)
         self.assertEqual(
             post.image,
-            f'{PostsConfig.name}/{form_data["image"]}'
+            (f"{Post.image.field.upload_to}"
+             f"{form_data['image'].name}")
         )
 
     def test_authorized_comment_create(self):
