@@ -25,7 +25,7 @@ FOLLOWING_URL = reverse(
 )
 UFOLLOWING_URL = reverse(
     'posts:profile_unfollow',
-    args=[NIK_2]
+    args=[NIK]
 )
 LOGIN = reverse('login')
 CREATE_REDIRECT = f'{LOGIN}?next={NEW_POST_URL}'
@@ -61,7 +61,6 @@ class PostsURLTests(TestCase):
         # второй клиент не автор поста
         cls.another = Client()
         cls.another.force_login(cls.user_2)
-
         # библиотека урлов
         cls.POST_PAGE_URL = reverse(
             'posts:post_detail',
@@ -96,9 +95,10 @@ class PostsURLTests(TestCase):
             [FOLLOW_URL, self.another, 200],
             [FOLLOWING_URL, self.guest, 302],
             [FOLLOWING_URL, self.another, 302],
-            [UFOLLOWING_URL, self.guest, 302],
             [FOLLOWING_URL, self.author, 302],
-            [UFOLLOWING_URL, self.author, 404]
+            [UFOLLOWING_URL, self.guest, 302],
+            [UFOLLOWING_URL, self.author, 404],
+            [UFOLLOWING_URL, self.another, 302]
         ]
         for url, client, code in cases:
             with self.subTest(url=url, client=client):
@@ -145,6 +145,9 @@ class PostsURLTests(TestCase):
             [UFOLLOWING_URL,
              self.guest,
              f'{LOGIN}?next={UFOLLOWING_URL}'],
+            [UFOLLOWING_URL,
+             self.another,
+             PROFILE_URL],
             [FOLLOWING_URL,
              self.author,
              PROFILE_URL],

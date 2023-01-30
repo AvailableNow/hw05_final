@@ -96,8 +96,8 @@ class PostModelTest(TestCase):
                     Comment._meta.get_field(value).help_text, expected
                 )
 
-    def test_models_have_correct_object_names(self):
-        """Проверяем, что у моделей корректно работает __str__."""
+    def test_post_have_correct_object_names(self):
+        """Проверяем, что у модели Post корректно работает __str__."""
         self.assertEqual(STRING_FROM_POST.format(
             self.post.author.username,
             self.post.pub_date,
@@ -105,6 +105,13 @@ class PostModelTest(TestCase):
             self.post.text,
         ), str(self.post)
         )
+
+    def test_group_have_correct_object_names(self):
+        """Проверяем, что у модели Group корректно работает __str__."""
+        self.assertEqual(self.group.title, str(self.group))
+
+    def test_comment_have_correct_object_names(self):
+        """Проверяем, что у модели Comment корректно работает __str__."""
         self.assertEqual(STRING_FROM_COMMENT.format(
             self.comment.author.username,
             self.comment.pub_date,
@@ -112,10 +119,12 @@ class PostModelTest(TestCase):
             self.comment.text,
         ), str(self.comment)
         )
+
+    def test_follow_have_correct_object_names(self):
+        """Проверяем, что у модели Follow корректно работает __str__."""
         self.assertEqual(STRING_FROM_FOLLOW.format(
             self.follow.author.username,
             self.follow.author.id,
             self.follow.user.username,
             self.user.id), str(self.follow)
         )
-        self.assertEqual(self.group.title, str(self.group))

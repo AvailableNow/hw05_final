@@ -22,7 +22,10 @@
           Автор: <a href="{% url 'posts:profile' post.author.username %}">{{ post.author.get_full_name}}</a>
         </li>
         <li class="list-group-item d-flex justify-content-between align-items-center">
-          Всего постов: {{ post.author.posts.count }}
+          Всего постов: <span> {{ post.author.posts.count }} </span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Комментариев: <span> {{ post.comments.count }}  </span>
         </li>
       </ul>
     </aside>

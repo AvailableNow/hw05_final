@@ -30,25 +30,21 @@ def group_posts(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    follow = (
-        request.user.is_authenticated
+    return render(request, 'posts/profile.html', {
+        'author': author,
+        'page_obj': paginator_page(author.posts.all(), request),
+        'following': request.user.is_authenticated
         and request.user.username != username
         and Follow.objects.filter(
             author=author,
             user=request.user
         ).exists()
-    )
-    return render(request, 'posts/profile.html', {
-        'author': author,
-        'page_obj': paginator_page(author.posts.all(), request),
-        'following': follow
     })
 
 
 def post_detail(request, post_id):
-    post = get_object_or_404(Post, pk=post_id)
     return render(request, 'posts/post_detail.html', {
-        'post': post,
+        'post': get_object_or_404(Post, pk=post_id),
         'form': CommentForm(),
     })
 

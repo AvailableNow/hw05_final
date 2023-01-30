@@ -8,8 +8,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from ..models import Group, Post, User, Follow
-POSTS_COUNT = 13
-POSTS_SECOND_PAGE = 4
+POSTS_SECOND_PAGE = 3
 NIK_1 = 'test_user'
 NIK_2 = 'test_author'
 NIK_3 = 'testauthor_3'
@@ -129,8 +128,9 @@ class PostsPagesTests(TestCase):
         super().tearDownClass()
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
-    def test_index_group_profile_show_correct_context(self):
-        """Шаблоны index,group,profile сформированы с правильным контекстом."""
+    def test_show_correct_context(self):
+        """Шаблоны index,group,profile,follow,post_detail"""
+        """сформированы с правильным контекстом."""
         Follow.objects.create(
             author=self.author_test,
             user=self.user_test,
@@ -165,8 +165,7 @@ class PostsPagesTests(TestCase):
 
     def test_group_list_has_correct_context(self):
         """Группа в контексте Групп-ленты без искажения атрибутов"""
-        response = self.authorized.get(GROUP_URL)
-        group = response.context['group']
+        group = self.authorized.get(GROUP_URL).context['group']
         self.assertEqual(group.title, self.group.title)
         self.assertEqual(group.description, self.group.description)
         self.assertEqual(group.slug, self.group.slug)
@@ -178,6 +177,7 @@ class PostsPagesTests(TestCase):
         self.assertNotIn(self.post, response.context['page_obj'])
 
     def test_paginator(self):
+        Post.objects.all().delete()
         COUNT = settings.MAX_POSTS + POSTS_SECOND_PAGE
         Follow.objects.create(
             author=self.author_test,
@@ -189,12 +189,13 @@ class PostsPagesTests(TestCase):
                 author=self.author_test,
                 group=self.group_2
             )
-            for i in range(COUNT - Post.objects.all().count())
+            for i in range(COUNT)
         )
         urls = {
             MAIN_URL: settings.MAX_POSTS,
             MAIN_PAGE_PAGINATOR_SECOND: POSTS_SECOND_PAGE,
             GROUP_URL_2: settings.MAX_POSTS,
+            GROUP_URL_2_SECOND: POSTS_SECOND_PAGE,
             PROFILE_URL: settings.MAX_POSTS,
             PROFILE_PAGINATOR_SECOND: POSTS_SECOND_PAGE,
             FOLLOW_URL: settings.MAX_POSTS,

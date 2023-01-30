@@ -1,7 +1,7 @@
 {% load thumbnail %}
 <article>
     <ul>
-      {% if not no_author %}
+      {% if not hide_author %}
         <li>
           Автор: {{ post.author.get_full_name }}
           <a href="{% url 'posts:profile' post.author.username %}">все посты пользователя</a>
@@ -16,7 +16,7 @@
     {% endthumbnail %}
     <p>{{ post.text|linebreaksbr }}</p>   
     <a href="{% url 'posts:post_detail' post.id %}">подробная информация</a>
-    {% if post.group and not no_group %}
+    {% if post.group and not hide_group %}
       <p><a href="{% url 'posts:group_list' post.group.slug %}">#{{post.group.title}}</a></p>
     {% endif %}
 </article>

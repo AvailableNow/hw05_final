@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from ..models import Comment, Group, Post, User
-from ..urls import app_name
+from posts.apps import PostsConfig
 
 # Создаем временную папку для медиа-файлов;
 # на момент теста медиа папка будет переопределена
@@ -127,7 +127,10 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(post.author, self.user_2)
         self.assertRedirects(response, PROFILE_URL_2)
-        self.assertEqual(post.image, f'{app_name}/{form_data["image"]}')
+        self.assertEqual(
+            post.image,
+            f'{PostsConfig.name}/{form_data["image"]}'
+        )
 
     def test_post_edit_by_author(self):
         """Выполнение редактирование поста автором"""
@@ -148,34 +151,16 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(post.group.id, form_data['group'])
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.author, self.post.author)
-        self.assertEqual(post.image, f'{app_name}/{form_data["image"]}')
-
-    def test_post_edit_by_non_author(self):
-        """Редактирование поста не автором поста
-        невозможно"""
-        form_data = {
-            'text': 'это сообщение не должно переписаться в пост',
-            'group': self.group.pk,
-            'image': UPLOADED
-        }
-        response = self.authorized_client.post(
-            self.EDIT_POST_URL,
-            data=form_data,
-            follow=True
+        self.assertEqual(
+            post.image,
+            f'{PostsConfig.name}/{form_data["image"]}'
         )
-        post = Post.objects.get(pk=self.post.pk)
-        self.assertRedirects(response, PROFILE_URL_2)
-        self.assertEqual(post.text, self.post.text)
-        self.assertEqual(post.group, self.post.group)
-        self.assertEqual(post.author, self.post.author)
-        self.assertEqual(post.image, self.post.image)
 
     def test_authorized_comment_create(self):
         """"Проверка создания комментария"""
         comments_count = set(Comment.objects.all())
         form_data = {
             'text': 'TEST',
-            'author': self.user,
         }
         response = self.authorized_client.post(
             self.COMMENT_ADD_URL,
@@ -186,7 +171,7 @@ class PostCreateFormTests(TestCase):
         comment = comments.pop()
         self.assertEqual(comment.post, self.post)
         self.assertEqual(comment.text, form_data['text'])
-        self.assertEqual(comment.author, form_data['author'])
+        self.assertEqual(comment.author, self.user)
         self.assertRedirects(response, self.POST_PAGE_URL)
 
     def test_guest_user_cannot_create_comment(self):
@@ -197,8 +182,7 @@ class PostCreateFormTests(TestCase):
             self.COMMENT_ADD_URL,
             data=form_data
         )
-        comments = set(Comment.objects.all()) - comments_count
-        self.assertEqual(len(comments), 0)
+        self.assertEqual(set(Comment.objects.all()), comments_count)
         self.assertRedirects(
             response,
             f'{LOGIN}?next={self.COMMENT_ADD_URL}'
@@ -226,4 +210,5 @@ class PostCreateFormTests(TestCase):
                 self.assertEqual(self.post.text, post.text)
                 self.assertEqual(self.post.group, post.group)
                 self.assertEqual(self.post.author, post.author)
+                self.assertEqual(self.post.image, post.image)
                 self.assertRedirects(response, redirect)
